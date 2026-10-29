@@ -36,31 +36,35 @@ export default function Login() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <label>
-        Логин
-        <input
-          name="login"
-          type="text"
-          autoComplete="username"
-          value={login}
-          onChange={(event) => setLogin(event.target.value)}
-        />
-      </label>
-      <label>
-        Пароль
-        <input
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-        />
-      </label>
-      {error && <p role="alert">{error}</p>}
-      <button type="submit" disabled={pending}>
-        Войти
-      </button>
-    </form>
+    <div className="flex min-h-screen items-center justify-center">
+      <form onSubmit={handleSubmit} className="flex w-72 flex-col gap-3 border border-black p-6">
+        <label className="flex flex-col gap-1">
+          Логин
+          <input
+            name="login"
+            type="text"
+            autoComplete="username"
+            value={login}
+            onChange={(event) => setLogin(event.target.value)}
+            className="border border-black px-2 py-1"
+          />
+        </label>
+        <label className="flex flex-col gap-1">
+          Пароль
+          <input
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            className="border border-black px-2 py-1"
+          />
+        </label>
+        {error && <p role="alert">{error}</p>}
+        <button type="submit" disabled={pending} className="bg-black px-2 py-1 text-white disabled:opacity-50">
+          Войти
+        </button>
+      </form>
+    </div>
   );
 }
