@@ -5,7 +5,7 @@ type LoginResponse = { ok: true } | { ok: false; error: string };
 
 export default function Login() {
   const navigate = useNavigate();
-  const [username, setUsername] = useState("");
+  const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -19,7 +19,7 @@ export default function Login() {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ login, password }),
       });
       const result = (await response.json()) as LoginResponse;
 
@@ -40,11 +40,11 @@ export default function Login() {
       <label>
         Логин
         <input
-          name="username"
+          name="login"
           type="text"
           autoComplete="username"
-          value={username}
-          onChange={(event) => setUsername(event.target.value)}
+          value={login}
+          onChange={(event) => setLogin(event.target.value)}
         />
       </label>
       <label>
