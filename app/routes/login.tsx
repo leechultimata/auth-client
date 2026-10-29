@@ -24,7 +24,7 @@ export default function Login() {
       const result = (await response.json()) as LoginResponse;
 
       if (result.ok) {
-        navigate("/");
+        navigate("/profile");
         return;
       }
       setError(result.error);

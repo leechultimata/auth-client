@@ -30,3 +30,43 @@ export async function loginWithAuthApi(login: string, password: string): Promise
   }
   return { type: "unavailable" };
 }
+
+export async function logoutWithAuthApi(refreshToken: string) {
+  try {
+    await fetch(`${AUTH_API_URL}/auth/logout`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
+    });
+  } catch {
+    // выходим локально, даже если сервис недоступен
+  }
+}
+
+export async function refreshTokens(refreshToken: string): Promise<AuthTokens | null> {
+  try {
+    const response = await fetch(`${AUTH_API_URL}/auth/refresh`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refreshToken }),
+    });
+    const body = await response.json().catch(() => ({}));
+    if (response.ok && typeof body.accessToken === "string" && typeof body.refreshToken === "string") {
+      return { accessToken: body.accessToken, refreshToken: body.refreshToken };
+    }
+  } catch {
+    // сервис недоступен
+  }
+  return null;
+}
+
+export async function isAuthorized(accessToken: string) {
+  try {
+    const response = await fetch(`${AUTH_API_URL}/me`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}

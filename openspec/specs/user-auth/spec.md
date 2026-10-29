@@ -46,11 +46,11 @@
 - **THEN** ответ — `405`
 
 ### Requirement: Результат входа на странице
-После ответа API страница входа SHALL перенаправить пользователя на `/`, если `ok: true`, а иначе показать текст ошибки на форме, оставив введённый логин.
+После ответа API страница входа SHALL перенаправить пользователя на `/profile`, если `ok: true`, а иначе показать текст ошибки на форме, оставив введённый логин.
 
 #### Scenario: Успех
 - **WHEN** API отвечает `200` `{ "ok": true }`
-- **THEN** пользователь оказывается на `/`
+- **THEN** пользователь оказывается на `/profile` и видит «Личный кабинет»
 
 #### Scenario: Ошибка
 - **WHEN** API отвечает с `ok: false` или запрос не удался из-за сети
@@ -65,12 +65,11 @@
 - **AND** ответ клиенту — `200` `{ "ok": true }`
 
 ### Requirement: Хранение токенов в cookie
-При успешном входе ответ SHALL установить две cookie, `accessToken` и `refreshToken`, со значениями токенов из ответа сервиса. Обе cookie SHALL иметь атрибуты `HttpOnly`, `Path=/`, `SameSite=Lax` и быть сессионными (без `Max-Age`/`Expires`). В production SHALL добавляться `Secure`.
+При успешном входе ответ SHALL установить две cookie, `accessToken` и `refreshToken`, со значениями токенов из ответа сервиса. Обе cookie SHALL иметь атрибуты `HttpOnly`, `Path=/`, `SameSite=Lax`. Cookie `accessToken` SHALL иметь `Max-Age=900` (15 минут), cookie `refreshToken` — `Max-Age=2592000` (30 дней). В production SHALL добавляться `Secure`.
 
 #### Scenario: Cookie после входа
 - **WHEN** вход успешен и сервис вернул `{ "accessToken": "A", "refreshToken": "R" }`
-- **THEN** ответ содержит `Set-Cookie: accessToken=A; Path=/; HttpOnly; SameSite=Lax` и `Set-Cookie: refreshToken=R; Path=/; HttpOnly; SameSite=Lax`
-- **AND** ни у одной из них нет `Max-Age` или `Expires`
+- **THEN** ответ содержит `Set-Cookie: accessToken=A; Path=/; HttpOnly; SameSite=Lax; Max-Age=900` и `Set-Cookie: refreshToken=R; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000`
 
 #### Scenario: Production
 - **WHEN** приложение запущено в production и вход успешен
@@ -95,3 +94,21 @@
 #### Scenario: Ответ без токенов
 - **WHEN** внешний сервис отвечает `200` с телом без `refreshToken`
 - **THEN** ответ клиенту — `502` с `ok: false`
+
+### Requirement: Выход из системы
+`POST /api/auth/logout` SHALL отправить `refreshToken` из cookie во внешний сервис `POST {AUTH_API_URL}/auth/logout` с JSON `{ "refreshToken" }`, если такая cookie есть. Затем при любом результате вызова эндпоинт SHALL удалить cookie `accessToken` и `refreshToken` и перенаправить на `/login`.
+
+#### Scenario: Выход вошедшего пользователя
+- **WHEN** пользователь с cookie `refreshToken` отправляет `POST /api/auth/logout`
+- **THEN** внешний сервис получает `POST /auth/logout` с этим `refreshToken`
+- **AND** ответ — редирект на `/login`
+- **AND** ответ содержит `Set-Cookie` для `accessToken` и `refreshToken` с `Max-Age=0` и `Path=/`
+
+#### Scenario: Сервис авторизации недоступен
+- **WHEN** пользователь отправляет `POST /api/auth/logout`, а внешний сервис недоступен
+- **THEN** cookie всё равно удаляются и происходит редирект на `/login`
+
+#### Scenario: Нет cookie
+- **WHEN** запрос `POST /api/auth/logout` пришёл без cookie `refreshToken`
+- **THEN** внешний сервис не вызывается
+- **AND** cookie удаляются и происходит редирект на `/login`
